@@ -5,5 +5,5 @@ import math.Complex;
 import java.awt.*;
 
 public interface FractalSet {
-    Color isInSet(Complex c);
+    float isInSet(Complex c);
 }

@@ -7,10 +7,12 @@ import math.fractal.FractalSet;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class FractalPainter implements Painter {
-    private Converter converter;
+    private Function<Complex, Float> fractalFunction;
     private final FractalSet fractal;
+    private Converter converter;
 
     public FractalPainter(Converter converter, FractalSet fractal) {
         this.converter = converter;
@@ -65,9 +67,7 @@ public class FractalPainter implements Painter {
             }
         }
 
-        synchronized (g) {
-            g.drawImage(sharedImage, 0, 0, null);
-        }
+        g.drawImage(sharedImage, 0, 0, null);
     }
 
     private class PaintHelper implements Runnable {
@@ -90,7 +90,12 @@ public class FractalPainter implements Painter {
                         double y0 = converter.yScr2Crt(j);
 
                         Complex c = new Complex(x0, y0);
-                        g.setColor(fractal.isInSet(c));
+                        fractalFunction = fractal::isInSet;
+                        var r = fractalFunction.apply(c);
+
+                        Color color = getColor(r);
+
+                        g.setColor(color);
                         g.fillRect(i, j, 1, 1);
                     }
                 }
@@ -98,5 +103,18 @@ public class FractalPainter implements Painter {
                 g.dispose();
             }
         }
+    }
+
+    private static Color getColor(float r) {
+        Color color;
+        if(r >= 1.0){
+            color = new Color(0);
+        }else{
+            int red = (int) (255 * Math.pow(r, 0.3)); // экспоненциальный рост
+            int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4))); // синусоидальная волна
+            int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6)); // логарифмическая шкала
+            color =new Color(blue,green,red);
+        }
+        return color;
     }
 }

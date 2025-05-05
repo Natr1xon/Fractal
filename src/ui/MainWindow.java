@@ -1,6 +1,7 @@
 package ui;
 
 import convert.Converter;
+import math.Complex;
 import math.fractal.FractalSet;
 import painting.FractalPainter;
 import painting.PaintPanel;
@@ -141,6 +142,19 @@ public class MainWindow extends JFrame {
         menuBar.add(fractal);
         setJMenuBar(menuBar);
 
+
+        mainPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(e.getClickCount()==2){
+                    double re = converter.xScr2Crt(e.getX());
+                    double im = converter.yScr2Crt(e.getY());
+                    JuliaWindow juliaFractal = new JuliaWindow(new Complex(re,im));
+                    juliaFractal.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    juliaFractal.setVisible(true);
+                }
+            }
+        });
     }
 
     private JMenuItem loadMenuItem() {

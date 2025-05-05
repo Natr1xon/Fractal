@@ -14,6 +14,11 @@ public class Complex {
         this.im = im;
     }
 
+    public Complex(Complex other){
+        this.re = other.re;
+        this.im = other.im;
+    }
+
     public double getRe() {
         return re;
     }

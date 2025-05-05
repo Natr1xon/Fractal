@@ -1,14 +1,14 @@
 package math.fractal;
 
 import math.Complex;
+import painting.FractalPainter;
 
-public class Julia implements FractalSet {
+public class Julia implements FractalFunction {
     private static final double ESCAPE_RADIUS = 4.0;
-    private final int maxIterations = 2000;
-    private final Complex constant; // Параметр для множества Жюлиа
+    private final Complex constant;
 
     public Julia() {
-        constant = new Complex(-0.8, 0.156); // Красивые значения по умолчанию
+        constant = new Complex(-0.8, 0.156);
     }
 
     public Julia(Complex dot){
@@ -20,11 +20,11 @@ public class Julia implements FractalSet {
         int iterations = 0;
         Complex z = new Complex(z0);
 
-        while (iterations < maxIterations && z.abs2() < ESCAPE_RADIUS) {
+        while (iterations < FractalPainter.maxIteration && z.abs2() < ESCAPE_RADIUS) {
             z.timesAssign(z);
             z.plusAssign(constant);
             iterations++;
         }
-        return (float) iterations / maxIterations;
+        return (float) iterations / FractalPainter.maxIteration ;
     }
 }

@@ -1,8 +1,8 @@
 package painting;
 
-import math.Complex;
 import convert.Converter;
-import math.fractal.FractalSet;
+import math.Complex;
+import math.fractal.FractalFunction;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -10,16 +10,47 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 public class FractalPainter implements Painter {
-    private Function<Complex, Float> fractalFunction;
-    private final FractalSet fractal;
     private Converter converter;
+    private final Function<Complex, Float> fractalFunction;
+    private ColorScheme colorSchemes;
+    private final int BASE_ITERATION = 100;
+    public static int maxIteration;
 
-    public FractalPainter(Converter converter, FractalSet fractal) {
+    public FractalPainter(Converter converter, FractalFunction fractalFunction) {
         this.converter = converter;
-        this.fractal = fractal;
+        this.fractalFunction = fractalFunction::isInSet;
+        setColorSchemes1();
+        maxIteration = BASE_ITERATION;
     }
 
-    public void setConverter(Converter converter){
+    public void setColorSchemes1(){
+        colorSchemes = r -> {
+            if(r>=1.0f) return new Color(0);
+            else {
+                int red = (int) (255 * Math.pow(r, 0.3));
+                int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4)));
+                int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6));
+                return new Color(blue, green, red);
+            }
+        };
+    }
+
+    public void setColorSchemes2(){
+        colorSchemes = r -> {
+            float saturation = 0.3f + 0.2f * (float)Math.sin(8 * Math.PI * r);
+            float brightness = 1.0f;
+            return Color.getHSBColor(r, saturation, brightness);
+        };
+    }
+
+    public void setColorSchemes3(){
+        colorSchemes = r -> {
+            int value = (int)(255 * (Math.sin(10 * Math.PI * r) * 0.5 + 0.5));
+            return new Color(value, value, 255);
+        };
+    }
+
+    public void setConverter(Converter converter) {
         this.converter = converter;
     }
 
@@ -42,6 +73,13 @@ public class FractalPainter implements Painter {
 
     @Override
     public void paint(Graphics g) {
+        double viewWidth = converter.getXMax() - converter.getXMin();
+        double viewHeight = converter.getYMax() - converter.getYMin();
+        double zoomLevel = 1.0 / Math.min(viewWidth, viewHeight);
+
+        int dynamicMaxIterations = (int)(BASE_ITERATION * (1 + Math.log10(zoomLevel)));
+        maxIteration = Math.min(dynamicMaxIterations, 10000);
+
         ArrayList<PaintHelper> paintHelpers = new ArrayList<>();
         ArrayList<Thread> threads = new ArrayList<>();
 
@@ -51,17 +89,16 @@ public class FractalPainter implements Painter {
                 BufferedImage.TYPE_INT_RGB
         );
 
-        for(int i = 0; i < PaintHelper.MAX_THREADS; i++){
+        for (int i = 0; i < PaintHelper.MAX_THREADS; i++) {
             paintHelpers.add(new PaintHelper(sharedImage, i));
             threads.add(new Thread(paintHelpers.getLast()));
             threads.getLast().start();
         }
 
-        for(var t : threads){
+        for (var t : threads) {
             try {
                 t.join();
-            }
-            catch (InterruptedException e){
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
@@ -90,10 +127,9 @@ public class FractalPainter implements Painter {
                         double y0 = converter.yScr2Crt(j);
 
                         Complex c = new Complex(x0, y0);
-                        fractalFunction = fractal::isInSet;
-                        var r = fractalFunction.apply(c);
+                        float r = fractalFunction.apply(c);
 
-                        Color color = getColor(r);
+                        Color color = colorSchemes.getColor(r);
 
                         g.setColor(color);
                         g.fillRect(i, j, 1, 1);
@@ -105,16 +141,7 @@ public class FractalPainter implements Painter {
         }
     }
 
-    private static Color getColor(float r) {
-        Color color;
-        if(r >= 1.0){
-            color = new Color(0);
-        }else{
-            int red = (int) (255 * Math.pow(r, 0.3)); // экспоненциальный рост
-            int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4))); // синусоидальная волна
-            int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6)); // логарифмическая шкала
-            color =new Color(blue,green,red);
-        }
-        return color;
+    public interface ColorScheme {
+        Color getColor(float r);
     }
 }

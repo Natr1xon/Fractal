@@ -2,7 +2,7 @@ package ui;
 
 import convert.Converter;
 import math.Complex;
-import math.fractal.FractalSet;
+import math.fractal.FractalFunction;
 import painting.FractalPainter;
 import painting.PaintPanel;
 
@@ -23,7 +23,7 @@ public class MainWindow extends JFrame {
     protected FractalPainter fractalPainter;
     protected Stack<Converter> zoomHistory = new Stack<>();
 
-    public MainWindow(String title, FractalSet fractal) {
+    public MainWindow(String title, FractalFunction fractal) {
         setTitle(title);
         fractalPainter = new FractalPainter(converter,fractal);
 
@@ -137,9 +137,12 @@ public class MainWindow extends JFrame {
         });
         fractal.add(fractalJulia);
 
+        JMenu colorScheme = getColorSchemeMenu();
+
         menuBar.add(file);
         menuBar.add(actions);
         menuBar.add(fractal);
+        menuBar.add(colorScheme);
         setJMenuBar(menuBar);
 
 
@@ -155,6 +158,30 @@ public class MainWindow extends JFrame {
                 }
             }
         });
+    }
+
+    private JMenu getColorSchemeMenu() {
+        JMenu colorScheme = new JMenu("Color scheme");
+        JMenuItem schemeFunc = new JMenuItem("Different functions");
+        schemeFunc.addActionListener(l->{
+            fractalPainter.setColorSchemes1();
+            mainPanel.repaint();
+        });
+        JMenuItem schemeThunder = new JMenuItem("Thunder");
+        schemeThunder.addActionListener(l->{
+            fractalPainter.setColorSchemes3();
+            mainPanel.repaint();
+        });
+        JMenuItem schemeWaterColor = new JMenuItem("Water color");
+        schemeWaterColor.addActionListener(l->{
+            fractalPainter.setColorSchemes2();
+            mainPanel.repaint();
+        });
+
+        colorScheme.add(schemeFunc);
+        colorScheme.add(schemeWaterColor);
+        colorScheme.add(schemeThunder);
+        return colorScheme;
     }
 
     private JMenuItem loadMenuItem() {

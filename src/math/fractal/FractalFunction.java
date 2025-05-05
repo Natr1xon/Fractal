@@ -2,8 +2,6 @@ package math.fractal;
 
 import math.Complex;
 
-import java.awt.*;
-
-public interface FractalSet {
+public interface FractalFunction {
     float isInSet(Complex c);
 }

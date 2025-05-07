@@ -3,6 +3,7 @@ package ui;
 import convert.Converter;
 import math.Complex;
 import math.fractal.FractalFunction;
+import painting.ColorScheme;
 import painting.FractalPainter;
 import painting.PaintPanel;
 
@@ -13,6 +14,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 public class MainWindow extends JFrame {
@@ -23,11 +26,14 @@ public class MainWindow extends JFrame {
     protected FractalPainter fractalPainter;
     protected Stack<Converter> zoomHistory = new Stack<>();
 
+    private final Map<String, ColorScheme> colorSchemeList = new HashMap<>();
+
     public MainWindow(String title, FractalFunction fractal) {
         setTitle(title);
         fractalPainter = new FractalPainter(converter,fractal);
 
         initComponents();
+        initSchemes();
         setupLayout();
     }
 
@@ -162,19 +168,19 @@ public class MainWindow extends JFrame {
 
     private JMenu getColorSchemeMenu() {
         JMenu colorScheme = new JMenu("Color scheme");
-        JMenuItem schemeFunc = new JMenuItem("Different functions");
+        JMenuItem schemeFunc = new JMenuItem("Function");
         schemeFunc.addActionListener(l->{
-            fractalPainter.setColorSchemes1();
+            fractalPainter.setColorScheme("Function",colorSchemeList.get("Function"));
             mainPanel.repaint();
         });
         JMenuItem schemeThunder = new JMenuItem("Thunder");
         schemeThunder.addActionListener(l->{
-            fractalPainter.setColorSchemes3();
+            fractalPainter.setColorScheme("Thunder",colorSchemeList.get("Thunder"));
             mainPanel.repaint();
         });
-        JMenuItem schemeWaterColor = new JMenuItem("Water color");
+        JMenuItem schemeWaterColor = new JMenuItem("Watercolor");
         schemeWaterColor.addActionListener(l->{
-            fractalPainter.setColorSchemes2();
+            fractalPainter.setColorScheme("Watercolor",colorSchemeList.get("Watercolor"));
             mainPanel.repaint();
         });
 
@@ -184,10 +190,32 @@ public class MainWindow extends JFrame {
         return colorScheme;
     }
 
+    private void initSchemes(){
+        colorSchemeList.put("Function", r -> {
+            if(r>=1.0f) return new Color(0);
+            else {
+                int red = (int) (255 * Math.pow(r, 0.3));
+                int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4)));
+                int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6));
+                return new Color(blue, green, red);
+            }
+        });
+        colorSchemeList.put("Watercolor", r -> {
+            float saturation = 0.3f + 0.2f * (float)Math.sin(8 * Math.PI * r);
+            float brightness = 1.0f;
+            return Color.getHSBColor(r, saturation, brightness);
+        });
+        colorSchemeList.put("Thunder", r -> {
+            int value = (int)(255 * (Math.sin(10 * Math.PI * r) * 0.5 + 0.5));
+            return new Color(value, value, 255);
+        });
+    }
+
     private JMenuItem loadMenuItem() {
         JFileChooser fileChooser = new JFileChooser();
         FileNameExtensionFilter fractalFilter = new FileNameExtensionFilter("Fractal data (*.frac)", "frac");
 
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + File.separator + "fractal"));
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setFileFilter(fractalFilter);
 
@@ -211,6 +239,13 @@ public class MainWindow extends JFrame {
                                 case "xMax" -> xMax = Double.parseDouble(parts[1]);
                                 case "yMin" -> yMin = Double.parseDouble(parts[1]);
                                 case "yMax" -> yMax = Double.parseDouble(parts[1]);
+                                case "Scheme" -> {
+                                    String schemeName = parts[1];
+                                    ColorScheme scheme = colorSchemeList.get(schemeName);
+                                    if (scheme != null) {
+                                        fractalPainter.setColorScheme(schemeName, scheme);
+                                    }
+                                }
                             }
                         }
                     }
@@ -231,6 +266,7 @@ public class MainWindow extends JFrame {
         FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG images (*.png)", "png");
         FileNameExtensionFilter fractalFilter = new FileNameExtensionFilter("Fractal data (*.frac)", "frac");
 
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + File.separator + "fractal"));
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.addChoosableFileFilter(jpegFilter);
         fileChooser.addChoosableFileFilter(pngFilter);
@@ -270,6 +306,8 @@ public class MainWindow extends JFrame {
                             writer.println("xMax:" + converter.getXMax());
                             writer.println("yMin:" + converter.getYMin());
                             writer.println("yMax:" + converter.getYMax());
+                            writer.println("Scheme:" + fractalPainter.getColorScheme());
+                            System.out.println("Scheme:" + fractalPainter.getColorScheme());
                         }
                     } else {
                         BufferedImage img = getBufferedImage();

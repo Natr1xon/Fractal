@@ -12,42 +12,34 @@ import java.util.function.Function;
 public class FractalPainter implements Painter {
     private Converter converter;
     private final Function<Complex, Float> fractalFunction;
-    private ColorScheme colorSchemes;
-    private final int BASE_ITERATION = 100;
+
+    private String nameScheme;
+    private ColorScheme colorScheme = r -> {
+        if(r>=1.0f) return new Color(0);
+        else {
+            int red = (int) (255 * Math.pow(r, 0.3));
+            int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4)));
+            int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6));
+            return new Color(blue, green, red);
+        }
+    };
+    private final int BASE_ITERATION = 300;
     public static int maxIteration;
+
 
     public FractalPainter(Converter converter, FractalFunction fractalFunction) {
         this.converter = converter;
         this.fractalFunction = fractalFunction::isInSet;
-        setColorSchemes1();
         maxIteration = BASE_ITERATION;
     }
 
-    public void setColorSchemes1(){
-        colorSchemes = r -> {
-            if(r>=1.0f) return new Color(0);
-            else {
-                int red = (int) (255 * Math.pow(r, 0.3));
-                int green = (int) (255 * Math.abs(Math.sin(r * Math.PI * 4)));
-                int blue = (int) (255 * Math.log(1 + 5 * r) / Math.log(6));
-                return new Color(blue, green, red);
-            }
-        };
+    public void setColorScheme(String name, ColorScheme scheme){
+        nameScheme = name;
+        colorScheme = scheme;
     }
 
-    public void setColorSchemes2(){
-        colorSchemes = r -> {
-            float saturation = 0.3f + 0.2f * (float)Math.sin(8 * Math.PI * r);
-            float brightness = 1.0f;
-            return Color.getHSBColor(r, saturation, brightness);
-        };
-    }
-
-    public void setColorSchemes3(){
-        colorSchemes = r -> {
-            int value = (int)(255 * (Math.sin(10 * Math.PI * r) * 0.5 + 0.5));
-            return new Color(value, value, 255);
-        };
+    public String getColorScheme(){
+        return nameScheme;
     }
 
     public void setConverter(Converter converter) {
@@ -129,7 +121,7 @@ public class FractalPainter implements Painter {
                         Complex c = new Complex(x0, y0);
                         float r = fractalFunction.apply(c);
 
-                        Color color = colorSchemes.getColor(r);
+                        Color color = colorScheme.getColor(r);
 
                         g.setColor(color);
                         g.fillRect(i, j, 1, 1);
@@ -139,9 +131,5 @@ public class FractalPainter implements Painter {
                 g.dispose();
             }
         }
-    }
-
-    public interface ColorScheme {
-        Color getColor(float r);
     }
 }

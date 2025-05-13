@@ -307,7 +307,6 @@ public class MainWindow extends JFrame {
                             writer.println("yMin:" + converter.getYMin());
                             writer.println("yMax:" + converter.getYMax());
                             writer.println("Scheme:" + fractalPainter.getColorScheme());
-                            System.out.println("Scheme:" + fractalPainter.getColorScheme());
                         }
                     } else {
                         BufferedImage img = getBufferedImage();
